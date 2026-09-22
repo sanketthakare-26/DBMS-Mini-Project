@@ -1,0 +1,284 @@
+{
+  "model_name": "Logistic Regression",
+  "model_type": "LogisticRegression",
+  "training_date": "2026-09-21T19:47:24.541354",
+  "training_samples": 416,
+  "test_samples": 104,
+  "total_dataset_samples": 520,
+  "features_used": [
+    "age",
+    "monthly_charge",
+    "subscription_months",
+    "monthly_logins",
+    "usage_hours",
+    "monthly_sessions",
+    "transactions_count",
+    "payment_delays",
+    "failed_payments",
+    "complaint_count",
+    "support_tickets",
+    "average_resolution_days",
+    "satisfaction_score",
+    "gender",
+    "plan_name",
+    "billing_cycle"
+  ],
+  "metrics": {
+    "accuracy": 0.9038,
+    "precision": 0.8929,
+    "recall": 0.9259,
+    "f1": 0.9091,
+    "roc_auc": 0.9759,
+    "confusion_matrix": [
+      [
+        44,
+        6
+      ],
+      [
+        4,
+        50
+      ]
+    ]
+  },
+  "cross_validation": {
+    "cv_folds": 5,
+    "accuracy_mean": 0.8485,
+    "accuracy_std": 0.0271,
+    "precision_mean": 0.8708,
+    "recall_mean": 0.8336,
+    "f1_mean": 0.8504,
+    "f1_std": 0.0336,
+    "roc_auc_mean": 0.937,
+    "roc_auc_std": 0.0182
+  },
+  "model_comparison": [
+    {
+      "model_name": "Logistic Regression",
+      "accuracy": 0.9038,
+      "precision": 0.8929,
+      "recall": 0.9259,
+      "f1": 0.9091,
+      "roc_auc": 0.9759,
+      "cv_roc_auc": 0.937,
+      "cv_f1": 0.8504
+    },
+    {
+      "model_name": "Decision Tree",
+      "accuracy": 0.8365,
+      "precision": 0.8136,
+      "recall": 0.8889,
+      "f1": 0.8496,
+      "roc_auc": 0.8439,
+      "cv_roc_auc": 0.8001,
+      "cv_f1": 0.8269
+    },
+    {
+      "model_name": "Random Forest",
+      "accuracy": 0.9135,
+      "precision": 0.8947,
+      "recall": 0.9444,
+      "f1": 0.9189,
+      "roc_auc": 0.9693,
+      "cv_roc_auc": 0.9205,
+      "cv_f1": 0.8504
+    },
+    {
+      "model_name": "Gradient Boosting",
+      "accuracy": 0.8942,
+      "precision": 0.8772,
+      "recall": 0.9259,
+      "f1": 0.9009,
+      "roc_auc": 0.9626,
+      "cv_roc_auc": 0.913,
+      "cv_f1": 0.8521
+    }
+  ],
+  "feature_importances": [
+    {
+      "feature": "satisfaction_score",
+      "importance": 0.1362
+    },
+    {
+      "feature": "payment_delays",
+      "importance": 0.1191
+    },
+    {
+      "feature": "complaint_count",
+      "importance": 0.0864
+    },
+    {
+      "feature": "failed_payments",
+      "importance": 0.0812
+    },
+    {
+      "feature": "monthly_logins",
+      "importance": 0.0785
+    },
+    {
+      "feature": "subscription_months",
+      "importance": 0.0713
+    },
+    {
+      "feature": "support_tickets",
+      "importance": 0.0658
+    },
+    {
+      "feature": "plan_name_Premium",
+      "importance": 0.0419
+    },
+    {
+      "feature": "usage_hours",
+      "importance": 0.0403
+    },
+    {
+      "feature": "monthly_sessions",
+      "importance": 0.0387
+    },
+    {
+      "feature": "transactions_count",
+      "importance": 0.0373
+    },
+    {
+      "feature": "average_resolution_days",
+      "importance": 0.0373
+    },
+    {
+      "feature": "billing_cycle_Quarterly",
+      "importance": 0.0294
+    },
+    {
+      "feature": "billing_cycle_Monthly",
+      "importance": 0.0216
+    },
+    {
+      "feature": "age",
+      "importance": 0.0189
+    },
+    {
+      "feature": "gender_Female",
+      "importance": 0.017
+    },
+    {
+      "feature": "plan_name_Standard",
+      "importance": 0.0169
+    },
+    {
+      "feature": "plan_name_Basic",
+      "importance": 0.0143
+    },
+    {
+      "feature": "monthly_charge",
+      "importance": 0.0139
+    },
+    {
+      "feature": "gender_Male",
+      "importance": 0.0105
+    },
+    {
+      "feature": "plan_name_Enterprise",
+      "importance": 0.0102
+    },
+    {
+      "feature": "billing_cycle_Annual",
+      "importance": 0.0074
+    },
+    {
+      "feature": "gender_Non-Binary",
+      "importance": 0.0061
+    }
+  ],
+  "tree_feature_importances": [
+    {
+      "feature": "satisfaction_score",
+      "importance": 0.1605
+    },
+    {
+      "feature": "average_resolution_days",
+      "importance": 0.1514
+    },
+    {
+      "feature": "complaint_count",
+      "importance": 0.1019
+    },
+    {
+      "feature": "support_tickets",
+      "importance": 0.0958
+    },
+    {
+      "feature": "payment_delays",
+      "importance": 0.0855
+    },
+    {
+      "feature": "failed_payments",
+      "importance": 0.0795
+    },
+    {
+      "feature": "subscription_months",
+      "importance": 0.0581
+    },
+    {
+      "feature": "usage_hours",
+      "importance": 0.0483
+    },
+    {
+      "feature": "monthly_sessions",
+      "importance": 0.0432
+    },
+    {
+      "feature": "age",
+      "importance": 0.041
+    },
+    {
+      "feature": "monthly_logins",
+      "importance": 0.0341
+    },
+    {
+      "feature": "transactions_count",
+      "importance": 0.0333
+    },
+    {
+      "feature": "monthly_charge",
+      "importance": 0.0085
+    },
+    {
+      "feature": "billing_cycle_Quarterly",
+      "importance": 0.0084
+    },
+    {
+      "feature": "billing_cycle_Annual",
+      "importance": 0.0082
+    },
+    {
+      "feature": "gender_Female",
+      "importance": 0.0067
+    },
+    {
+      "feature": "billing_cycle_Monthly",
+      "importance": 0.0064
+    },
+    {
+      "feature": "gender_Non-Binary",
+      "importance": 0.0063
+    },
+    {
+      "feature": "gender_Male",
+      "importance": 0.0059
+    },
+    {
+      "feature": "plan_name_Standard",
+      "importance": 0.0049
+    },
+    {
+      "feature": "plan_name_Enterprise",
+      "importance": 0.0047
+    },
+    {
+      "feature": "plan_name_Premium",
+      "importance": 0.004
+    },
+    {
+      "feature": "plan_name_Basic",
+      "importance": 0.0037
+    }
+  ]
+}

@@ -1,94 +1,136 @@
-// Reusable stat card
-export function StatCard({ icon: Icon, iconColor, label, value, sub }) {
+import { RefreshCw, AlertCircle, Database, CheckCircle } from 'lucide-react';
+
+// Reusable KPI Stat Card
+export function StatCard({ icon: Icon, iconColor = '#6366f1', label, value, sub, trend }) {
   return (
     <div className="stat-card">
-      <div className="stat-icon-wrap" style={{ background: iconColor + '18', color: iconColor }}>
-        <Icon size={22} />
-      </div>
-      <div className="stat-body">
-        <p className="stat-label">{label}</p>
-        <p className="stat-value">{value}</p>
-        {sub && <p className="stat-sub">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-// Page header with optional refresh button and live-sync indicator
-export function PageHeader({ title, subtitle, lastRefresh, onRefresh, refreshLabel = 'Refresh Data', isSyncing }) {
-  return (
-    <div className="page-header">
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h1 className="page-title">{title}</h1>
-          {/* Live indicator — pulsing green dot shows auto-sync is active */}
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '5px',
-            fontSize: '12px', fontWeight: 600, color: '#10b981',
-            background: '#ecfdf5', border: '1px solid #6ee7b7',
-            borderRadius: '999px', padding: '2px 10px',
-          }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: '#10b981',
-              animation: 'livePulse 1.5s ease-in-out infinite',
-              display: 'inline-block',
-            }} />
-            Live
-          </span>
+      <div className="stat-card-header">
+        <span className="stat-label">{label}</span>
+        <div className="stat-icon-wrap" style={{ background: `${iconColor}18`, color: iconColor }}>
+          <Icon size={20} />
         </div>
-        <p className="page-subtitle">{subtitle}</p>
-        {lastRefresh && (
-          <p className="last-updated">
-            {isSyncing ? '🔄 Syncing with database…' : `Last synced: ${formatTime(lastRefresh)}`}
-          </p>
-        )}
       </div>
-      {onRefresh && (
-        <button className="btn btn-primary" onClick={onRefresh} disabled={isSyncing}>
-          <span>⟳</span> {isSyncing ? 'Syncing…' : refreshLabel}
-        </button>
+      <div className="stat-value">{value}</div>
+      {(sub || trend) && (
+        <div className="stat-footer">
+          {trend && <span className="stat-trend">{trend}</span>}
+          {sub && <span className="stat-sub">{sub}</span>}
+        </div>
       )}
     </div>
   );
 }
 
-// Section card wrapper
-export function Card({ title, children, className = '' }) {
+// Section Card Wrapper
+export function Card({ title, subtitle, action, children, className = '' }) {
   return (
     <div className={`card ${className}`}>
-      {title && <h3 className="card-title">{title}</h3>}
-      {children}
+      {(title || action) && (
+        <div className="card-header">
+          <div>
+            {title && <h3 className="card-title">{title}</h3>}
+            {subtitle && <p className="card-subtitle">{subtitle}</p>}
+          </div>
+          {action && <div className="card-action">{action}</div>}
+        </div>
+      )}
+      <div className="card-content">{children}</div>
     </div>
   );
 }
 
-// Status badge
-export function StatusBadge({ status }) {
-  const cls = {
-    'Excellent':       'badge-excellent',
-    'Good':            'badge-good',
-    'Average':         'badge-average',
-    'Needs Attention': 'badge-attention',
-  }[status] ?? 'badge-average';
+// Risk Level Badge
+export function RiskBadge({ risk }) {
+  const normalized = (risk || 'Low').toLowerCase();
+  const cls =
+    normalized === 'high'
+      ? 'risk-high'
+      : normalized === 'medium'
+      ? 'risk-medium'
+      : 'risk-low';
 
-  return <span className={`badge ${cls}`}>{status}</span>;
+  return <span className={`risk-badge ${cls}`}>{risk || 'Low'}</span>;
 }
 
-// Format a Date object as readable string
+// Churn Status Badge
+export function ChurnBadge({ churn }) {
+  const isChurn = churn === 1 || churn === '1' || churn === true;
+  return (
+    <span className={`churn-badge ${isChurn ? 'badge-churned' : 'badge-retained'}`}>
+      {isChurn ? 'Churned' : 'Active'}
+    </span>
+  );
+}
+
+// Plan Badge
+export function PlanBadge({ plan }) {
+  const p = (plan || 'Standard').toLowerCase();
+  return <span className={`plan-badge plan-${p}`}>{plan || 'Standard'}</span>;
+}
+
+// Loading Skeleton
+export function SkeletonLoader({ rows = 4, height = 28 }) {
+  return (
+    <div className="skeleton-wrap">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className="skeleton-bar"
+          style={{ height: `${height}px`, opacity: 1 - i * 0.12 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Error State Banner
+export function ErrorState({ message = 'Unable to connect to FastAPI backend.', onRetry }) {
+  return (
+    <div className="error-state-card">
+      <AlertCircle size={36} className="error-icon" />
+      <h3>Backend Connection Unavailable</h3>
+      <p>{message}</p>
+      <div className="error-actions">
+        {onRetry && (
+          <button className="btn btn-primary" onClick={onRetry}>
+            <RefreshCw size={15} /> Retry Connection
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Empty State
+export function EmptyState({ message = 'No data available', subtext }) {
+  return (
+    <div className="empty-state">
+      <Database size={32} className="empty-icon" />
+      <p className="empty-text">{message}</p>
+      {subtext && <p className="empty-sub">{subtext}</p>}
+    </div>
+  );
+}
+
+// Formatters
+export function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount || 0);
+}
+
+export function formatPercent(value) {
+  return `${(value || 0).toFixed(1)}%`;
+}
+
 export function formatTime(date) {
   if (!date) return '';
-  return date.toLocaleString('en-IN', {
-    day: '2-digit', month: 'long', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true,
+  return new Date(date).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
-}
-
-// Relative time (e.g. "5 minutes ago")
-export function timeAgo(date) {
-  const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-  if (diff < 60)           return `${diff} seconds ago`;
-  if (diff < 3600)         return `${Math.floor(diff / 60)} minute${Math.floor(diff / 60) !== 1 ? 's' : ''} ago`;
-  if (diff < 86400)        return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) !== 1 ? 's' : ''} ago`;
-  return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) !== 1 ? 's' : ''} ago`;
 }

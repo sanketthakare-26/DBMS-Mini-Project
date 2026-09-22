@@ -1,50 +1,83 @@
-import { LayoutDashboard, Users, BarChart2, DatabaseZap, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Users,
+  BrainCircuit,
+  AlertOctagon,
+  BarChart3,
+  CreditCard,
+  Receipt,
+  MessageSquareWarning,
+  Cpu,
+  History,
+  DatabaseZap,
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  ShieldAlert,
+} from 'lucide-react';
 
 const NAV_ITEMS = [
-  { id: 'dashboard',  label: 'Dashboard',          icon: LayoutDashboard },
-  { id: 'students',   label: 'Students',            icon: Users },
-  { id: 'analytics',  label: 'Analytics',           icon: BarChart2 },
-  { id: 'db-changes', label: 'Database Changes',    icon: DatabaseZap },
-  { id: 'about',      label: 'About Project',       icon: Info },
+  { path: '/',                   label: 'Dashboard',             icon: LayoutDashboard },
+  { path: '/customers',          label: 'Customers',             icon: Users },
+  { path: '/prediction',         label: 'Churn Prediction',      icon: BrainCircuit },
+  { path: '/high-risk',          label: 'High Risk Customers',   icon: AlertOctagon },
+  { path: '/analytics',          label: 'Analytics',             icon: BarChart3 },
+  { path: '/subscriptions',      label: 'Subscriptions',         icon: CreditCard },
+  { path: '/payments',           label: 'Payments',              icon: Receipt },
+  { path: '/complaints',         label: 'Complaints',            icon: MessageSquareWarning },
+  { path: '/model-performance',  label: 'Model Performance',     icon: Cpu },
+  { path: '/prediction-history',  label: 'Prediction History',    icon: History },
+  { path: '/database-activity',  label: 'Database Activity',     icon: DatabaseZap },
+  { path: '/about',              label: 'About Project',         icon: Info },
 ];
 
-export default function Sidebar({ currentPage, onNavigate, isOpen, onToggle }) {
+export default function Sidebar({ isOpen, onToggle }) {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
-      {/* Brand */}
       <div className="sidebar-brand">
-        {isOpen && (
-          <div className="brand-text">
-            <span className="brand-name">StudentDB</span>
-            <span className="brand-sub">Analytics</span>
-          </div>
-        )}
-        <button className="sidebar-toggle" onClick={onToggle} title="Toggle sidebar">
+        <div className="brand-logo-wrap">
+          <ShieldAlert size={22} className="brand-icon" />
+          {isOpen && (
+            <div className="brand-text">
+              <span className="brand-name">RetentionHub</span>
+              <span className="brand-sub">Customer Intelligence</span>
+            </div>
+          )}
+        </div>
+        <button
+          className="sidebar-toggle"
+          onClick={onToggle}
+          title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
           {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
       </div>
 
-      {/* Navigation */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            className={`nav-item ${currentPage === id ? 'active' : ''}`}
-            onClick={() => onNavigate(id)}
+        {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
+          <NavLink
+            key={path}
+            to={path}
+            end={path === '/'}
+            className={({ isActive }) =>
+              `nav-item ${isActive ? 'active' : ''}`
+            }
             title={!isOpen ? label : undefined}
           >
-            <Icon size={20} className="nav-icon" />
+            <Icon size={18} className="nav-icon" />
             {isOpen && <span className="nav-label">{label}</span>}
-          </button>
+          </NavLink>
         ))}
       </nav>
 
-      {/* Footer */}
       {isOpen && (
         <div className="sidebar-footer">
-          <span>DBMS Mini Project</span>
+          <div className="footer-tag">System Connected</div>
+          <div className="footer-meta">FastAPI & MySQL 8.0</div>
         </div>
       )}
     </aside>
+
   );
 }

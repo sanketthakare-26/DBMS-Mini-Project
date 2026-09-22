@@ -1,171 +1,106 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import Navbar from './components/Navbar';
+import { ToastProvider } from './components/Toast';
+
+// Pages
 import DashboardPage from './pages/DashboardPage';
-import StudentsPage from './pages/StudentsPage';
+import CustomersPage from './pages/CustomersPage';
+import CustomerProfilePage from './pages/CustomerProfilePage';
+import ChurnPredictionPage from './pages/ChurnPredictionPage';
+import HighRiskPage from './pages/HighRiskPage';
 import AnalyticsPage from './pages/AnalyticsPage';
-import DatabaseChangesPage from './pages/DatabaseChangesPage';
+import SubscriptionsPage from './pages/SubscriptionsPage';
+import PaymentsPage from './pages/PaymentsPage';
+import ComplaintsPage from './pages/ComplaintsPage';
+import ModelPerformancePage from './pages/ModelPerformancePage';
+import PredictionHistoryPage from './pages/PredictionHistoryPage';
+import DatabaseActivityPage from './pages/DatabaseActivityPage';
 import AboutPage from './pages/AboutPage';
-import { INITIAL_STUDENTS, INITIAL_ACTIVITY, getStatus } from './data/mockStudents';
-import {
-  getAllStudents,
-  addStudent as apiAddStudent,
-  updateStudent as apiUpdateStudent,
-  deleteStudent as apiDeleteStudent,
-  getActivity as apiGetActivity,
-} from './services/api';
+
+import { checkBackendHealth } from './services/api';
 import './App.css';
 
-// ─── Auto-refresh interval (milliseconds) ─────────────────────────────────
-// The dashboard will silently re-read the database every 5 seconds.
-// Change this number if you want faster / slower updates.
-const POLL_INTERVAL_MS = 5000;
-
-// Normalise a student row coming from the API (student_id → id, add status)
-function normaliseStudent(s) {
-  return {
-    ...s,
-    id: s.id ?? s.student_id,
-    status: s.status ?? getStatus(Number(s.marks), Number(s.attendance)),
-  };
-}
-
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [students, setStudents]       = useState(INITIAL_STUDENTS);
-  const [activity, setActivity]       = useState(INITIAL_ACTIVITY);
-  const [lastRefresh, setLastRefresh] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isSyncing, setIsSyncing]     = useState(false);
+  const [dbStatus, setDbStatus] = useState({ connected: false });
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState(30); // 30s default
+  const [lastSyncTime, setLastSyncTime] = useState(new Date());
+  const [syncTrigger, setSyncTrigger] = useState(0);
 
-  // ── Core fetch function ───────────────────────────────────────────────────
-  // silent=true  → background poll (no loading spinner)
-  // silent=false → user-triggered refresh (shows spinner)
-  const fetchAllData = useCallback(async (silent = false) => {
+  // Health check & global sync coordinator
+  const syncWithDatabase = useCallback(async (silent = false) => {
     if (!silent) setIsSyncing(true);
-
     try {
-      const studentsData = await getAllStudents();
-      if (Array.isArray(studentsData)) {
-        setStudents(studentsData.map(normaliseStudent));
-      }
-    } catch (err) {
-      console.warn('Could not load students from backend:', err.message);
+      const health = await checkBackendHealth();
+      setDbStatus(health);
+      setLastSyncTime(new Date());
+      setSyncTrigger((prev) => prev + 1);
+    } catch {
+      setDbStatus({ connected: false });
+    } finally {
+      if (!silent) setIsSyncing(false);
     }
-
-    try {
-      const activityData = await apiGetActivity();
-      if (Array.isArray(activityData)) {
-        setActivity(
-          activityData.map(item => ({
-            ...item,
-            timestamp: new Date(item.timestamp),
-          }))
-        );
-      }
-    } catch (err) {
-      console.warn('Could not load activity log from backend:', err.message);
-    }
-
-    setLastRefresh(new Date());
-    if (!silent) setIsSyncing(false);
   }, []);
 
-  // ── Load on startup ───────────────────────────────────────────────────────
+  // Initial load
   useEffect(() => {
-    fetchAllData(false);
-  }, [fetchAllData]);
+    syncWithDatabase(false);
+  }, [syncWithDatabase]);
 
-  // ── AUTO-POLL every POLL_INTERVAL_MS ─────────────────────────────────────
-  // This is what makes the dashboard update automatically when you change
-  // data directly in MySQL (Workbench, SQL query, etc.) — without clicking
-  // any button on the page.
+  // Configurable Auto-Sync Timer (Default 30s)
   useEffect(() => {
-    const id = setInterval(() => fetchAllData(true), POLL_INTERVAL_MS);
-    return () => clearInterval(id); // cleanup on unmount
-  }, [fetchAllData]);
+    if (autoRefreshInterval <= 0) return;
 
-  // ── Fallback: push a local activity entry when backend is offline ─────────
-  const pushActivity = useCallback((type, title, description) => {
-    setActivity(prev => [
-      { id: Date.now(), type, title, description, timestamp: new Date() },
-      ...prev,
-    ]);
-  }, []);
+    const intervalId = setInterval(() => {
+      syncWithDatabase(true);
+    }, autoRefreshInterval * 1000);
 
-  // ── CRUD handlers ─────────────────────────────────────────────────────────
-
-  const handleAddStudent = useCallback(async (data) => {
-    try {
-      await apiAddStudent(data);
-      await fetchAllData(false);          // re-read DB immediately after write
-    } catch (err) {
-      console.error('Failed to add student:', err);
-      const newId = Math.max(...students.map(s => s.id), 0) + 1;
-      setStudents(prev => [...prev, { id: newId, ...data }]);
-      pushActivity('added', 'Student Added', `${data.name} was added`);
-    }
-  }, [students, pushActivity, fetchAllData]);
-
-  const handleUpdateStudent = useCallback(async (id, data) => {
-    try {
-      await apiUpdateStudent(id, data);
-      await fetchAllData(false);
-    } catch (err) {
-      console.error('Failed to update student:', err);
-      setStudents(prev => prev.map(s => (s.id === id ? { ...s, ...data } : s)));
-      pushActivity('updated', 'Student Updated', `Student ID ${id} was updated`);
-    }
-  }, [pushActivity, fetchAllData]);
-
-  const handleDeleteStudent = useCallback(async (id) => {
-    try {
-      await apiDeleteStudent(id);
-      await fetchAllData(false);
-    } catch (err) {
-      console.error('Failed to delete student:', err);
-      setStudents(prev => prev.filter(s => s.id !== id));
-      pushActivity('deleted', 'Student Deleted', `Student ID ${id} was removed`);
-    }
-  }, [pushActivity, fetchAllData]);
-
-  const handleRefresh = useCallback(() => fetchAllData(false), [fetchAllData]);
-
-  // ── Props shared to every page ────────────────────────────────────────────
-  const pageProps = {
-    students,
-    activity,
-    lastRefresh,
-    isSyncing,
-    onRefresh:  handleRefresh,
-    onAdd:      handleAddStudent,
-    onUpdate:   handleUpdateStudent,
-    onDelete:   handleDeleteStudent,
-    pushActivity,
-    setLastRefresh,
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard':  return <DashboardPage  {...pageProps} />;
-      case 'students':   return <StudentsPage    {...pageProps} />;
-      case 'analytics':  return <AnalyticsPage   {...pageProps} />;
-      case 'db-changes': return <DatabaseChangesPage {...pageProps} />;
-      case 'about':      return <AboutPage />;
-      default:           return <DashboardPage  {...pageProps} />;
-    }
-  };
+    return () => clearInterval(intervalId);
+  }, [autoRefreshInterval, syncWithDatabase]);
 
   return (
-    <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-      <Sidebar
-        currentPage={currentPage}
-        onNavigate={setCurrentPage}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(o => !o)}
-      />
-      <main className="main-content">
-        {renderPage()}
-      </main>
-    </div>
+    <BrowserRouter>
+      <ToastProvider>
+        <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+          <Sidebar
+            isOpen={sidebarOpen}
+            onToggle={() => setSidebarOpen((prev) => !prev)}
+          />
+
+          <div className="main-wrapper">
+            <Navbar
+              dbStatus={dbStatus}
+              isSyncing={isSyncing}
+              onRefresh={() => syncWithDatabase(false)}
+              autoRefreshInterval={autoRefreshInterval}
+              onIntervalChange={setAutoRefreshInterval}
+              lastSyncTime={lastSyncTime}
+            />
+
+            <main className="main-content">
+              <Routes>
+                <Route path="/" element={<DashboardPage key={syncTrigger} />} />
+                <Route path="/customers" element={<CustomersPage key={syncTrigger} />} />
+                <Route path="/customers/:id" element={<CustomerProfilePage key={syncTrigger} />} />
+                <Route path="/prediction" element={<ChurnPredictionPage key={syncTrigger} />} />
+                <Route path="/high-risk" element={<HighRiskPage key={syncTrigger} />} />
+                <Route path="/analytics" element={<AnalyticsPage key={syncTrigger} />} />
+                <Route path="/subscriptions" element={<SubscriptionsPage key={syncTrigger} />} />
+                <Route path="/payments" element={<PaymentsPage key={syncTrigger} />} />
+                <Route path="/complaints" element={<ComplaintsPage key={syncTrigger} />} />
+                <Route path="/model-performance" element={<ModelPerformancePage key={syncTrigger} />} />
+                <Route path="/prediction-history" element={<PredictionHistoryPage key={syncTrigger} />} />
+                <Route path="/database-activity" element={<DatabaseActivityPage key={syncTrigger} />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="*" element={<DashboardPage key={syncTrigger} />} />
+              </Routes>
+            </main>
+          </div>
+        </div>
+      </ToastProvider>
+    </BrowserRouter>
   );
 }
